@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/message.dart';
 import '../database/db_helper.dart';
 import 'create_message_screen.dart';
@@ -90,9 +91,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         : const Icon(Icons.note),
                     title: Text(msg.title),
                     subtitle: Text(msg.content),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => deleteMessage(msg.id!),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.share),
+                          onPressed: () {
+                            final textToShare = '${msg.title}\n\n${msg.content}';
+                            // You can also include the image if needed
+                            Share.share(textToShare);
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => deleteMessage(msg.id!),
+                        ),
+                      ],
                     ),
                     onTap: () async {
                       await Navigator.push(
