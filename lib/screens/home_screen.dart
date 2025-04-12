@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../database/db_helper.dart';
 import 'create_message_screen.dart';
+import 'view_edit_message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,8 +13,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Message> allMessages = [];
   List<Message> messages = [];
+  List<Message> filteredMessages = [];
+  String searchQuery = '';
   final dbHelper = DBHelper();
 
   @override
@@ -22,30 +24,30 @@ class _HomeScreenState extends State<HomeScreen> {
     fetchMessages();
   }
 
+  // Fetch messages from the database
   void fetchMessages() async {
     final data = await dbHelper.getMessages();
     print("Fetched ${data.length} messages");
     setState(() {
-      allMessages = data;
       messages = data;
+      filteredMessages = data;  // Initially, display all messages
     });
   }
 
+  // Delete a message by ID
   void deleteMessage(int id) async {
     await dbHelper.deleteMessage(id);
-    fetchMessages();
+    fetchMessages();  // Refresh the list after deleting
   }
 
-  void filterMessages(String query) {
-    final filtered = allMessages.where((msg) {
-      final titleLower = msg.title.toLowerCase();
-      final contentLower = msg.content.toLowerCase();
-      final searchLower = query.toLowerCase();
-      return titleLower.contains(searchLower) || contentLower.contains(searchLower);
-    }).toList();
-
+  // Handle search filtering
+  void updateSearch(String query) {
     setState(() {
-      messages = filtered;
+      searchQuery = query;
+      filteredMessages = messages.where((msg) {
+        return msg.title.toLowerCase().contains(query.toLowerCase()) ||
+            msg.content.toLowerCase().contains(query.toLowerCase());
+      }).toList();
     });
   }
 
@@ -55,24 +57,27 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(title: const Text("My Blog App")),
       body: Column(
         children: [
+          // Search bar
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(12.0),
             child: TextField(
               decoration: const InputDecoration(
-                labelText: 'Search messages...',
+                labelText: 'Search Messages',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
-              onChanged: filterMessages,
+              onChanged: updateSearch,  // Update filtered messages on text change
             ),
           ),
+
+          // List view to display messages
           Expanded(
-            child: messages.isEmpty
+            child: filteredMessages.isEmpty
                 ? const Center(child: Text("No messages found"))
                 : ListView.builder(
-              itemCount: messages.length,
+              itemCount: filteredMessages.length,
               itemBuilder: (context, index) {
-                final msg = messages[index];
+                final msg = filteredMessages[index];
                 return Card(
                   child: ListTile(
                     leading: msg.imagePath != null
@@ -89,8 +94,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       icon: const Icon(Icons.delete),
                       onPressed: () => deleteMessage(msg.id!),
                     ),
-                    onTap: () {
-                      // Optional: Navigate to a view/edit screen
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ViewEditMessageScreen(message: msg),
+                        ),
+                      );
+                      fetchMessages(); // Refresh after editing
                     },
                   ),
                 );
@@ -105,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
             context,
             MaterialPageRoute(builder: (_) => const CreateMessageScreen()),
           );
-          fetchMessages();
+          fetchMessages();  // Refresh after adding a new message
         },
         child: const Icon(Icons.add),
       ),
