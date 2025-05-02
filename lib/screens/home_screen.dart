@@ -5,6 +5,8 @@ import '../models/message.dart';
 import '../database/db_helper.dart';
 import 'create_message_screen.dart';
 import 'view_edit_message_screen.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/services.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -144,10 +146,14 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.share),
-              onPressed: () {
-                final text =
-                    '${msg.title}\n\n${msg.content}';
-                Share.share(text);
+              onPressed: () async {
+                final textToShare = '${msg.title}\n\n${msg.content}';
+                if (msg.imagePath != null && File(msg.imagePath!).existsSync()) {
+                  final file = XFile(msg.imagePath!);
+                  await Share.shareXFiles([file], text: textToShare);
+                } else {
+                  await Share.share(textToShare);
+                }
               },
             ),
             IconButton(
