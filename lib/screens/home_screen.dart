@@ -7,6 +7,7 @@ import 'create_message_screen.dart';
 import 'view_edit_message_screen.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
+import '../utils/wordpress_api.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -145,6 +146,33 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
+              icon: const Icon(Icons.cloud_upload),
+              onPressed: () async {
+              final success = await postToWordPress(
+              title: msg.title,
+              content: msg.content,
+              imageFile: msg.imagePath != null ? File(msg.imagePath!) : null,
+              username: 'root',
+              password: 'root',
+              );
+              showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+              title: Text(success ? "Upload Successful" : "Upload Failed"),
+              content: Text(success
+              ? "Your message was uploaded to WordPress."
+                  : "There was a problem uploading your message."),
+              actions: [
+              TextButton(
+              child: const Text("OK"),
+              onPressed: () => Navigator.of(context).pop(),
+              ),
+              ],
+              ),
+              );
+              },
+            ),
+    IconButton(
               icon: const Icon(Icons.share),
               onPressed: () async {
                 final textToShare = '${msg.title}\n\n${msg.content}';
