@@ -53,9 +53,8 @@ class DBHelper {
 
   Future<void> deleteMultiple(List<int> ids) async {
     final db = await database;
-    for (int id in ids) {
-      await db.delete('messages', where: 'id = ?', whereArgs: [id]);
-    }
+    final idList = ids.join(',');
+    await db.rawDelete('DELETE FROM messages WHERE id IN ($idList)');
   }
 
   Future<int> updateMessage(Message msg) async {
